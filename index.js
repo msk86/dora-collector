@@ -18,7 +18,7 @@ prodJob: Prod
 */
 const {startTime, endTime, pipeline, prodJob = 'Prod'} = args();
 
-requestBuildUntilDeployed(pipeline, startTime)
+requestBuildUntilDeployed(pipeline, startTime, endTime)
     .then(filterInBeforeEnd)
     .then(filterInAfterStart)
     .then(filterUndeployed)
@@ -121,7 +121,7 @@ function toJSON(data) {
     return JSON.parse(data);
 }
 
-function requestBuildForOnePage(pipeline, startTime, page) {
+function requestBuildForOnePage(pipeline, startTime, endTime, page) {
     return request({
         uri: `${BUILDKITE_API}/v2/organizations/${pipeline.split('/').join('/pipelines/')}/builds`,
         headers: {
@@ -129,26 +129,27 @@ function requestBuildForOnePage(pipeline, startTime, page) {
         },
         qs: {
             finished_from: startTime,
+            created_to: endTime,
             page: page,
             per_page: DEFAULT_BUILDKITE_PAGE_SIZE
         }
     }).then(toJSON).then(cleanData);
 }
 
-function requestBuildForAllPages(pipeline, startTime, page, until) {
-    return requestBuildForOnePage(pipeline, startTime, page)
+function requestBuildForAllPages(pipeline, startTime, endTime, page, until) {
+    return requestBuildForOnePage(pipeline, startTime, endTime, page)
         .then(data => {
             if (data.length < DEFAULT_BUILDKITE_PAGE_SIZE || findLast(data, until)) { 
                 return data;
             } else {
-                return requestBuildForAllPages(pipeline, startTime, page + 1, until)
+                return requestBuildForAllPages(pipeline, startTime, endTime, page + 1, until)
                     .then(dataNextPage => uniqBy(concat(data, dataNextPage), d => d.build_id));
             }
         });
 }
 
-function requestBuildUntilDeployed(pipeline, startTime) {
-    return requestBuildForAllPages(pipeline, yearAgo(startTime), 1, d => new Date(d.deployed_at) < new Date(startTime));
+function requestBuildUntilDeployed(pipeline, startTime, endTime) {
+    return requestBuildForAllPages(pipeline, yearAgo(startTime), endTime, 1, d => new Date(d.deployed_at) < new Date(startTime));
 }
 
 function yearAgo(time) {

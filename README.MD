@@ -10,7 +10,7 @@
 
 3. `node index.js --startTime 2019-12-16 --endTime 2019-12-23 --pipeline aaa/application-ui --prodJob Prod`
 
-    * `startTime` and `endTime` specifies the date range of the deployments
+    * `startTime` and `endTime` specifies the date range of the deployments, the logic is `startTime(00:00:00) <= date < endTime(00:00:00))`
     * `pipeline` should be in `[organization]/[pipeline]` format, `organization` and `pipeline` are all variables in BuildKite
     * `prodJob` indicates the name of the pipeline job which does the production deployment
 
@@ -22,7 +22,3 @@ It prints a table:
 |------|--------|--------------|-------------|---------------------|
 
 Then you can use what every tools to analyse the data (E.g. Excel)
-
-# Please notice
-
-* Because of the API limitation of BuildKite, the performance of loading old builds are very bad. Please make sure you only retrive the data for latest 30 days.

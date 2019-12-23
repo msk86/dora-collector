@@ -16,9 +16,9 @@
 
 # Output
 
-It prints a table:
+It prints a table with following headers:
 
 | Repo | Commit | Committed At | Deployed At | Deployment Build Id |
 |------|--------|--------------|-------------|---------------------|
 
-Then you can use what every tools to analyse the data (E.g. Excel)
+Then you can use whatever tools to analyse the data (E.g. Excel)

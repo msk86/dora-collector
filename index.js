@@ -58,7 +58,8 @@ function getPR(build) {
         uri: `${GITHUB_API}/repos/${build.repository}/commits/${build.commit}/pulls`,
         headers: {
             'Authorization': `token ${GITHUB_TOKEN}`,
-            'Accept': 'application/vnd.github.groot-preview+json'
+            'Accept': 'application/vnd.github.groot-preview+json',
+            'User-Agent': 'Mock-Agent'
         }
     }).then(toJSON).then(first);
     //TODO support complex branch model. only deal with PR merge to master now.

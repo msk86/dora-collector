@@ -122,13 +122,7 @@ function cleanData(data) {
 }
 
 function toJSON(data) {
-    var json;
-    try {
-        json = JSON.parse(data);
-    } catch (e) {
-        json = JSON.parse("{}");
-    }
-    return json;
+    return JSON.parse(data);
 }
 
 function requestBuildForOnePage(pipeline, startTime, endTime, page) {

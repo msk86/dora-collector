@@ -7,6 +7,7 @@
 2. copy and make your own `.env` files from `.env-example`
 
     * Make sure you generate API TOKEN for `Github` and `BuildKite` with right access
+    * Make sure you set your Github Enterpise API url if you are using GHE
 
 3. `node index.js --startTime 2019-12-16 --endTime 2019-12-23 --pipeline aaa/application-ui --prodJob Prod`
 

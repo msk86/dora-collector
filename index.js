@@ -24,6 +24,7 @@ requestBuildUntilDeployed(pipeline, startTime, endTime)
     .then(filterUndeployed)
     .then(addDeployBuild)
     .then(mergeWithGithub)
+    .then(removeDuplication)
     .then(excelLog);
 
 function removeDuplication(commits) {

@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  creationTimestamp: null
+  labels:
+    component: grafana
+  name: grafana-claim
+  namespace: dorakit
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: grafana
+  name: grafana-deployment
+  namespace: dorakit
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: grafana
+  template:
+    metadata:
+      labels:
+        component: grafana
+    spec:
+      volumes:
+        - name: grafana-claim
+          persistentVolumeClaim:
+            claimName: grafana-claim
+      containers:
+        - name: grafana
+          image: zhywang/grafana
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: postgres-config
+          resources:
+            limits:
+              cpu: 500m
+              memory: 2500Mi
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          volumeMounts:
+            - mountPath: /var/lib/grafana
+              name: grafana-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: dorakit
+spec:
+  type: NodePort
+  selector:
+    component: grafana
+  ports:
+    - port: 3000
+      nodePort: 30080

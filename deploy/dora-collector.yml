@@ -1,0 +1,105 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dorakit
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dora-collector-config
+  namespace: dorakit
+  labels:
+    app: dora-collector
+data:
+  BUILDKITE_API: https://api.buildkite.com
+  GITHUB_API: https://api.github.com
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: dora-collector-cron-job-order-tracking-service
+  namespace: dorakit
+spec:
+  schedule: "0 * * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: dora-collector-cron-job-order-tracking-service
+            jobgroup: dora-collector-cron-job
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: dora-collector-cron-job-order-tracking-service
+              image: zhywang/dora-collector
+              imagePullPolicy: IfNotPresent
+              envFrom:
+                - configMapRef:
+                    name: dora-collector-config
+                - configMapRef:
+                    name: postgres-config
+                - secretRef:
+                    name: dora-collector-secret
+              args: ["index.js", "--startTime", "2019-12-01", "--endTime", "2020-01-31", "--pipeline", "YOUR_PIPLINE", "--prodJob", "YOUR_JOB"]
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: dora-collector-cron-job-purchase-service
+  namespace: dorakit
+spec:
+  schedule: "0 * * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: dora-collector-cron-job-purchase-service
+            jobgroup: dora-collector-cron-job
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: dora-collector-cron-job-purchase-service
+              image: zhywang/dora-collector
+              imagePullPolicy: IfNotPresent
+              envFrom:
+                - configMapRef:
+                    name: dora-collector-config
+                - configMapRef:
+                    name: postgres-config
+                - secretRef:
+                    name: dora-collector-secret
+              args: ["index.js", "--startTime", "2019-12-01", "--endTime", "2020-01-31", "--pipeline", "YOUR_PIPLINE", "--prodJob", "YOUR_JOB"]
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: dora-collector-cron-job-subscription-service
+  namespace: dorakit
+spec:
+  schedule: "0 * * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: dora-collector-cron-job-subscription-service
+            jobgroup: dora-collector-cron-job
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: dora-collector-cron-job-subscription-service
+              image: zhywang/dora-collector
+              imagePullPolicy: IfNotPresent
+              envFrom:
+                - configMapRef:
+                    name: dora-collector-config
+                - configMapRef:
+                    name: postgres-config
+                - secretRef:
+                    name: dora-collector-secret
+              args: ["index.js", "--startTime", "2019-12-01", "--endTime", "2020-01-31", "--pipeline", "YOUR_PIPLINE", "--prodJob", "YOUR_JOB"]

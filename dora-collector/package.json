@@ -1,0 +1,16 @@
+{
+  "name": "dora-collector",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {},
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "arg": "^4.1.2",
+    "lodash": "^4.17.15",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.5",
+    "pg": "^7.17.0"
+  }
+}

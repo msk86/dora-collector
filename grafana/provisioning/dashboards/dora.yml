@@ -1,0 +1,23 @@
+apiVersion: 1
+
+providers:
+  - name: 'Change Lead Time'
+    orgId: 1
+    folder: 'Dora'
+    type: file
+    disableDeletion: true
+    editable: true
+    updateIntervalSeconds: 86400
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/provisioning/dashboards/files/change-lead-time.json
+  - name: 'Deployment Frequency'
+    orgId: 1
+    folder: 'Dora'
+    type: file
+    disableDeletion: true
+    editable: true
+    updateIntervalSeconds: 86400
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/provisioning/dashboards/files/deployment-frequency.json

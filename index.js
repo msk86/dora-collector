@@ -154,7 +154,7 @@ function requestBuildForAllPages(pipeline, startTime, endTime, page, until) {
 }
 
 function requestBuildUntilDeployed(pipeline, startTime, endTime) {
-    return requestBuildForAllPages(pipeline, yearAgo(startTime), endTime, 1, d => new Date(d.deployed_at) < new Date(startTime));
+    return requestBuildForAllPages(pipeline, startTime, endTime, 1, d => new Date(d.deployed_at) < new Date(startTime));
 }
 
 function yearAgo(time) {

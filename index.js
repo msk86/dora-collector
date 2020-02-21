@@ -66,17 +66,69 @@ function getPR(build) {
     }).then(toJSON).then(first);
     //TODO support complex branch model. only deal with PR merge to master now.
 }
+function getCommitOrPrCommitsQueryBody(query) {
+  return JSON.stringify({query: `{${query}}
+fragment Commit on Commit {
+  authoredDate
+  oid
+}
+fragment commitOrPr on Commit {
+    author {
+      name
+    }
+    ...Commit
+    associatedPullRequests(last: 5) {
+      nodes {
+        title
+        commits(last: 100) {
+          totalCount
+          nodes {
+            commit {
+             ...Commit
+            }
+          }
+        }
+      }
+  }
+}`});
+}
 
 function mergeWithGithub(builds) {
-    return Promise.all(map(builds, build => {
-        return getPR(build).then(pr => {
-            if(pr) {
-                return getPrCommits(pr).then(prCommits(build));
-            } else {
-                return build;
-            }
+    const query = map(builds, (build, index) => {
+        const [owner, repo] = build.repository.split('/');
+        return `item${index}: repository(name: "${repo}", owner: "${owner}") {
+                  object(oid: "${build.commit}") {
+                    ...commitOrPr
+                  }
+               }`;
+    }).join("\n")
+    return request({
+        uri: `${GITHUB_API}/graphql`,
+        headers: {
+            'Authorization': `token ${GITHUB_TOKEN}`,
+            'User-Agent': 'Mock-Agent'
+        },
+        method: "POST",
+        body: getCommitOrPrCommitsQueryBody(query)})
+      .then(toJSON)
+      .then(data =>
+        Object.entries(data.data)
+        .flatMap(([indexStr,commit]) => {
+            const build = builds[+indexStr.substr(4)]
+            const prCommits = commit.object.associatedPullRequests.nodes[0]
+            return prCommits
+              ? prCommits.commits.nodes.map(c => [build, c.commit])
+              : [[build, commit.object]];
         })
-    })).then(flatten);
+        .map(([build, commit]) => ({
+              build_id: build.build_id,
+              commit: commit.oid,
+              committed_at: commit.authoredDate,
+              repository: build.repository,
+              finished_at: build.finished_at,
+              deployed_at: build.deployed_at,
+              deploy_build: build.deploy_build
+        })))
 }
 
 function addDeployBuild(data) {
@@ -85,7 +137,7 @@ function addDeployBuild(data) {
         if(d.deployed_at) {
             currDeployId = d.build_id;
             currDeployedAt = d.deployed_at;
-        } 
+        }
         d.deploy_build = currDeployId;
         d.deployed_at = currDeployedAt;
     });
@@ -150,7 +202,7 @@ function requestBuildForOnePage(pipeline, startTime, endTime, page) {
 function requestBuildForAllPages(pipeline, startTime, endTime, page, until) {
     return requestBuildForOnePage(pipeline, startTime, endTime, page)
         .then(data => {
-            if (data.length < DEFAULT_BUILDKITE_PAGE_SIZE || findLast(data, until)) { 
+            if (data.length < DEFAULT_BUILDKITE_PAGE_SIZE || findLast(data, until)) {
                 return data;
             } else {
                 return requestBuildForAllPages(pipeline, startTime, endTime, page + 1, until)

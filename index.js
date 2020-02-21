@@ -16,12 +16,13 @@ endTime: 2019-12-08
 pipeline: [organization]/[pipeline]
 prodJob: Prod
 */
-const {startTime, endTime, pipeline, prodJob = 'Prod'} = args();
+const {startTime, endTime, pipeline, prodJob = 'Prod', skipBuild} = args();
 
 requestBuildUntilDeployed(pipeline, startTime, endTime)
     .then(filterInBeforeEnd)
     .then(filterInAfterStart)
     .then(filterUndeployed)
+    .then(filterSkipBuild)
     .then(addDeployBuild)
     .then(mergeWithGithub)
     .then(removeDuplication)
@@ -96,6 +97,10 @@ function filterUndeployed(data) {
     return data.slice(data.findIndex(d => d.deployed_at));
 }
 
+function filterSkipBuild(data) {
+    return data.filter(d => d.message !== skipBuild);
+}
+
 function filterInAfterStart(data) {
     return data.slice(0, data.findIndex(d => isDateEarly(d.deployed_at, startTime)));
 }
@@ -117,7 +122,8 @@ function cleanData(data) {
             repository: d.pipeline.provider.settings.repository,
             finished_at: d.finished_at,
             deployed_at: (find(d.jobs, j => j.state == 'passed' && includes(j.name, prodJob)) || {}).finished_at,
-            deploy_build: undefined
+            deploy_build: undefined,
+            message: d.message
         }
     });
 }
@@ -181,13 +187,15 @@ function args() {
         '--startTime': String,
         '--endTime': String,
         '--pipeline': String,
-        '--prodJob': String
+        '--prodJob': String,
+        '--skipBuild': String
     });
 
     return {
         startTime: argWithDash['--startTime'],
         endTime: argWithDash['--endTime'],
         pipeline: argWithDash['--pipeline'],
-        prodJob: argWithDash['--prodJob']
+        prodJob: argWithDash['--prodJob'],
+        skipBuild: argWithDash['--skipBuild']
     };
 }

@@ -48,7 +48,7 @@ function prCommits(build) {
 
 function getPrCommits(pr) {
     return request({
-        uri: `${GITHUB_API}/repos/${pr.head.repo.full_name}/pulls/${pr.number}/commits`,
+        uri: `${GITHUB_API}/repos/${pr.base.repo.full_name}/pulls/${pr.number}/commits`,
         headers: {
             'Authorization': `token ${GITHUB_TOKEN}`
         }

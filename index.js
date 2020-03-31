@@ -32,13 +32,15 @@ function removeDuplication(commits) {
     return uniqBy(commits, 'commit');
 }
 
-function prCommits(build) {
+function prCommits(build, pr) {
     return function(commits) {
         return map(commits, c => ({
             build_id: build.build_id,
             commit: c.sha,
             committed_at: c.commit.author.date,
             repository: build.repository,
+            pr_created_at: pr.created_at,
+            pr_merged_at: pr.merged_at,
             finished_at: build.finished_at,
             deployed_at: build.deployed_at,
             deploy_build: build.deploy_build
@@ -48,7 +50,7 @@ function prCommits(build) {
 
 function getPrCommits(pr) {
     return request({
-        uri: `${GITHUB_API}/repos/${pr.head.repo.full_name}/pulls/${pr.number}/commits`,
+        uri: `${pr._links.commits.href}`,
         headers: {
             'Authorization': `token ${GITHUB_TOKEN}`
         }
@@ -71,7 +73,7 @@ function mergeWithGithub(builds) {
     return Promise.all(map(builds, build => {
         return getPR(build).then(pr => {
             if(pr) {
-                return getPrCommits(pr).then(prCommits(build));
+                return getPrCommits(pr).then(prCommits(build, pr));
             } else {
                 return build;
             }
@@ -115,11 +117,14 @@ function isDateEarly(d1, d2) {
 
 function cleanData(data) {
     return map(data, d => {
+        const committedAt = isEmpty(d.meta_data) ? d.created_at : d.meta_data['buildkite:git:commit'].match(/\nCommitDate: (.+)\n/)[1];
         return {
             build_id: `${d.pipeline.slug}/${d.number}`,
             commit: d.commit,
-            committed_at: isEmpty(d.meta_data) ? d.created_at : d.meta_data['buildkite:git:commit'].match(/\nCommitDate: (.+)\n/)[1],
+            committed_at: committedAt,
             repository: d.pipeline.provider.settings.repository,
+            pr_created_at: committedAt,
+            pr_merged_at: committedAt,
             finished_at: d.finished_at,
             deployed_at: (find(d.jobs, j => j.state == 'passed' && includes(j.name, prodJob)) || {}).finished_at,
             deploy_build: undefined,
@@ -177,6 +182,7 @@ function debugLog(data) {
 }
 
 function excelLog(data) {
+    console.log('Copy the following data to Excel sheet please...');
     each(data, d => console.log(`${d.repository}	${d.commit}	${formatTime(d.committed_at)}	${formatTime(d.deployed_at)}	${d.deploy_build}`));
     return data;
 }
